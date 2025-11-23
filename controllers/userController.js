@@ -114,40 +114,47 @@ const reservarCancha = async (req, res) => {
  */
 const listaReservas = async (req, res) => {
     try {
-        // Obtenemos el userId del token decodificado (proporcionado por authUser)
-        const { userId } = req.body
+        const { userId } = req.body;
 
-        // Consulta las reservas del usuario, ordenadas por fecha descendente
-        const reservas = await reservaModel.find({ userId })
-            .sort({ fecha: -1 }) // del más reciente al más antiguo
-            .select('espacioFecha reservaHora canchaData') // solo campos necesarios
+        // Orden descendente: más recientes primero
+        let reservas = await reservaModel.find({ userId })
+            .select('espacioFecha reservaHora canchaData cancelado fecha');
+        reservas = reservas.reverse();
 
-        res.json({ success: true, reservas })
+        res.json({ success: true, reservas });
     } catch (error) {
-        console.error('Error al obtener reservas:', error)
-        res.status(500).json({ success: false, message: error.message })
+        console.error('Error al obtener reservas:', error);
+        res.status(500).json({ success: false, message: error.message });
     }
-}
+};
+
 
 //API para cancelar reservas del propio usuario
 const cancelarReserva = async (req, res) => {
     try {
-       const {userId, reservaId} = req.body
-       const reservaData = await reservaModel.findById(reservaId)
-       //verificacion
-       if (reservaData.userId !== userId){
-        return res.json({success:false, message:"Acción NO Autorizada"})
-       }
-       await reservaModel.findByIdAndUpdate(reservaId, {cancelado: true})
-       const {canchaId, espacioFecha, reservaHora} = reservaData
-       const canchaData = await canchaModel.findById(canchaId)
-       let espacios_reservados = canchaData.espacios_reservados
-       espacios_reservados[espacioFecha] = espacios_reservados[espacioFecha].filter(e => e !== reservaHora)
-       await canchaModel.findByIdAndUpdate(canchaId, {espacios_reservados})
+        const { userId, reservaId } = req.body;
+        const reservaData = await reservaModel.findById(reservaId);
+        if (!reservaData) {
+            return res.json({ success: false, message: "Reserva no encontrada" });
+        }
+        // Corrección principal
+        if (reservaData.userId.toString() !== userId.toString()) {
+            return res.json({ success: false, message: "Acción NO Autorizada" });
+        }
+        // Cancelar reserva
+        await reservaModel.findByIdAndUpdate(reservaId, { cancelado: true });
+        // Liberar espacio en la cancha
+        const { canchaId, espacioFecha, reservaHora } = reservaData;
+        const canchaData = await canchaModel.findById(canchaId);
+        let espacios_reservados = canchaData.espacios_reservados;
+        espacios_reservados[espacioFecha] = espacios_reservados[espacioFecha].filter(h => h !== reservaHora);
+        await canchaModel.findByIdAndUpdate(canchaId, { espacios_reservados });
+        return res.json({ success: true, message: "Reserva Cancelada" });
     } catch (error) {
-        console.log(error)
-        res.json({success: false, message: error.message})
+        console.log(error);
+        res.json({ success: false, message: error.message });
     }
-}
+};
+
 
 export {registrarUsuario, loginUsuario, reservarCancha, listaReservas, cancelarReserva}
