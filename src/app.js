@@ -1,28 +1,29 @@
-import express from 'express'
-import cors from 'cors'
-import 'dotenv/config'
-import "./cron/sendReminder.js";
-import connectDB from './config/mongodb.js'
-import adminGeneralRouter from './routes/adminGeneralRoute.js'
-import canchaRouter from './routes/canchaRoute.js'
-import userRouter from './routes/userRoute.js'
+import "dotenv/config";
+import express from "express";
+import cors from "cors";
+import connectDB from "./config/mongodb.js";
+import adminGeneralRouter from "./routes/adminGeneralRoute.js";
+import canchaRouter from "./routes/canchaRoute.js";
+import userRouter from "./routes/userRoute.js";
+import { startReminderCron } from "./cron/sendReminder.js";
 
-//app config
-const app = express()
-const port = process.env.PORT || 3000
-connectDB()
+const app = express();
+const port = process.env.PORT || 3000;
 
-//middlewares
-app.use(express.json())
-app.use(cors())
+await connectDB();
 
-//api endpoints
-app.use('/api/admin-general', adminGeneralRouter)
-app.use('/api/cancha', canchaRouter)
-app.use('/api/user', userRouter)
+app.use(express.json());
+app.use(cors());
 
-app.get('/', (req, res) => {
-  res.send('API funcional')
-})
+app.use("/api/admin-general", adminGeneralRouter);
+app.use("/api/cancha", canchaRouter);
+app.use("/api/user", userRouter);
 
-app.listen(port, () => console.log('servidor corriendo en puerto ', port))
+app.get("/", (req, res) => {
+    res.send("API funcional");
+});
+
+app.listen(port, () => {
+    console.log("servidor corriendo en puerto", port);
+    startReminderCron();
+});
