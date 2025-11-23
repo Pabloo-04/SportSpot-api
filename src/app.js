@@ -1,7 +1,8 @@
 import express from 'express'
 import cors from 'cors'
 import 'dotenv/config'
-import connectDB from './src/config/mongodb.js'
+import "./cron/sendReminder.js";
+import connectDB from './config/mongodb.js'
 import adminGeneralRouter from './routes/adminGeneralRoute.js'
 import canchaRouter from './routes/canchaRoute.js'
 import userRouter from './routes/userRoute.js'
