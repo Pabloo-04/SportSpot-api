@@ -105,14 +105,27 @@ const reservarCancha = async (req, res) => {
 }
 
 //API para obtener las reservas del usuario en 'mis-reservas'
+/**
+ * Lista las reservas de un usuario autenticado.
+ * Endpoint: GET /mis-reservas
+ * Requiere: authUser middleware
+ * Retorna: JSON con las reservas ordenadas de más reciente a más antiguo
+ * Campos mínimos: fecha, reservaHora, centro deportivo (canchaData.nombre)
+ */
 const listaReservas = async (req, res) => {
     try {
-        const {userId} = req.body
-        const reservas = await reservaModel.find({userId})
-        res.json({success: true, reservas})
+        // Obtenemos el userId del token decodificado (proporcionado por authUser)
+        const { userId } = req.body
+
+        // Consulta las reservas del usuario, ordenadas por fecha descendente
+        const reservas = await reservaModel.find({ userId })
+            .sort({ fecha: -1 }) // del más reciente al más antiguo
+            .select('espacioFecha reservaHora canchaData') // solo campos necesarios
+
+        res.json({ success: true, reservas })
     } catch (error) {
-        console.log(error)
-        res.json({success: false, message: error.message})
+        console.error('Error al obtener reservas:', error)
+        res.status(500).json({ success: false, message: error.message })
     }
 }
 
