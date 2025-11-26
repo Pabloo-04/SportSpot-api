@@ -11,6 +11,7 @@ const reservaSchema = new mongoose.Schema({
     fecha: {type: Date, required: true},
     cancelado: {type: Boolean, default: false},
     completada: {type: Boolean, default: false},
+    recordatorioEnviado: { type: Boolean, default: false },
 })
 
 const reservaModel = mongoose.models.reserva || mongoose.model('reserva', reservaSchema)
